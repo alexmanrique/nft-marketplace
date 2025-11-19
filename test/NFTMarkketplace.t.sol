@@ -35,37 +35,35 @@ contract NFTMarketplaceTest is Test {
     }
 
     function testShouldRevertIfPriceIsZero() public {
-      vm.startPrank(user);
-      vm.expectRevert("Price must be greater than 0");
-      nftMarketplace.listNFT(address(nft), tokenId, 0);
-      vm.stopPrank();
+        vm.startPrank(user);
+        vm.expectRevert("Price must be greater than 0");
+        nftMarketplace.listNFT(address(nft), tokenId, 0);
+        vm.stopPrank();
     }
 
     function testShouldRevertIfNotOwner() public {
-      vm.startPrank(user);
-      
-      address user2_ = vm.addr(3);
-      uint256 tokenId_ = 1;
-      nft.mint(user2_, tokenId_);
+        vm.startPrank(user);
 
-      vm.expectRevert("You must be the owner of the NFT");
-      nftMarketplace.listNFT(address(nft), tokenId_, 1);
-      vm.stopPrank();
+        address user2_ = vm.addr(3);
+        uint256 tokenId_ = 1;
+        nft.mint(user2_, tokenId_);
+
+        vm.expectRevert("You must be the owner of the NFT");
+        nftMarketplace.listNFT(address(nft), tokenId_, 1);
+        vm.stopPrank();
     }
 
     function testListNFTCorrectly() public {
-      vm.startPrank(user);
-      
-      (,address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
-      nftMarketplace.listNFT(address(nft), tokenId, 1);
-      (,address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
-      
-      assertEq(sellerBefore, address(0));
-      assertEq(sellerAfter, user);
-      
-      vm.stopPrank();
+        vm.startPrank(user);
+
+        (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
+        nftMarketplace.listNFT(address(nft), tokenId, 1);
+        (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerBefore, address(0));
+        assertEq(sellerAfter, user);
+
+        vm.stopPrank();
     }
-
-
 }
 
