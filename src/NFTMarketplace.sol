@@ -17,7 +17,9 @@ contract NFTMarketplace is Ownable, ReentrancyGuard {
 
     event NFTListed(address indexed seller, address indexed nftAddress, uint256 indexed tokenId, uint256 price);
     event NFTCancelled(address indexed seller, address indexed nftAddress, uint256 indexed tokenId);
-    event NFTSold(address indexed buyer, address indexed seller, address indexed nftAddress, uint256 tokenId, uint256 price);
+    event NFTSold(
+        address indexed buyer, address indexed seller, address indexed nftAddress, uint256 tokenId, uint256 price
+    );
 
     // la cartera que deploye el smart contract sera el owner
     constructor() Ownable(msg.sender) {}
@@ -36,19 +38,16 @@ contract NFTMarketplace is Ownable, ReentrancyGuard {
     }
 
     function buyNFT(address nftAddress_, uint256 tokenId_) external payable nonReentrant {
-         Listing memory listing_ = listings[nftAddress_][tokenId_];
-         require(listing_.nftAddress != address(0), "Listing not found");
-         require(listing_.price>0, "Price must be equal to the listing price");
-         require(msg.value == listing_.price, "Amount sent must be equal to the listing price");
-        
+        Listing memory listing_ = listings[nftAddress_][tokenId_];
+        require(listing_.nftAddress != address(0), "Listing not found");
+        require(listing_.price > 0, "Price must be equal to the listing price");
+        require(msg.value == listing_.price, "Amount sent must be equal to the listing price");
+
         IERC721(nftAddress_).safeTransferFrom(listing_.seller, msg.sender, tokenId_);
 
-        (bool success, ) = listing_.seller.call{value: msg.value}("");
+        (bool success,) = listing_.seller.call{value: msg.value}("");
         require(success, "Transfer failed");
         delete listings[nftAddress_][tokenId_];
-        
-
-
     }
 
     function cancelListing(address nftAddress_, uint256 tokenId_) external {
