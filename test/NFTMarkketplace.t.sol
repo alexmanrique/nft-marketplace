@@ -65,5 +65,44 @@ contract NFTMarketplaceTest is Test {
 
         vm.stopPrank();
     }
+
+    function testShouldRevertIfYouAreNotTheOwnerWhenCancelling() public {
+        vm.startPrank(user);
+
+        (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
+        nftMarketplace.listNFT(address(nft), tokenId, 1);
+        (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerBefore, address(0));
+        assertEq(sellerAfter, user);
+
+        vm.stopPrank();
+
+        address user2_ = vm.addr(3);
+        vm.startPrank(user2_);
+        vm.expectRevert("You must be the seller of the NFT");
+        nftMarketplace.cancelListing(address(nft), tokenId);
+        vm.stopPrank();
+    }
+
+    function testCancelListShouldWorkCorrectly() public {
+
+        vm.startPrank(user);
+
+        (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
+        nftMarketplace.listNFT(address(nft), tokenId, 1);
+        (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerBefore, address(0));
+        assertEq(sellerAfter, user);
+
+        nftMarketplace.cancelListing(address(nft), tokenId);
+        (, address sellerAfter2,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerAfter2, address(0));
+        
+        vm.stopPrank();
+
+    }
 }
 
