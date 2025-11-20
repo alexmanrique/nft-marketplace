@@ -126,7 +126,7 @@ contract NFTMarketplaceTest is Test {
         vm.startPrank(user2_);
         vm.deal(user2_, price);
         vm.expectRevert("Amount sent must be equal to the listing price");
-        nftMarketplace.buyNFT{value: price-1}(address(nft), tokenId);
+        nftMarketplace.buyNFT{value: price - 1}(address(nft), tokenId);
         vm.stopPrank();
     }
 
@@ -148,10 +148,10 @@ contract NFTMarketplaceTest is Test {
 
         uint256 balanceBefore = address(user2_).balance;
         uint256 balanceBefore2 = address(user).balance;
-        
+
         address ownerBefore = nft.ownerOf(tokenId);
         (, address sellerBefore2,,) = nftMarketplace.listings(address(nft), tokenId);
-        
+
         nftMarketplace.buyNFT{value: price}(address(nft), tokenId);
         (, address sellerAfter2,,) = nftMarketplace.listings(address(nft), tokenId);
 
@@ -160,9 +160,9 @@ contract NFTMarketplaceTest is Test {
 
         assertEq(balanceBefore - price, balanceAfter);
         assertEq(balanceBefore2 + price, balanceAfter2);
-        
+
         address ownerAfter = nft.ownerOf(tokenId);
-        
+
         assertEq(ownerBefore, user);
         assertEq(ownerAfter, user2_);
 
