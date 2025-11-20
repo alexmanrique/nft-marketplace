@@ -86,7 +86,6 @@ contract NFTMarketplaceTest is Test {
     }
 
     function testCancelListShouldWorkCorrectly() public {
-
         vm.startPrank(user);
 
         (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
@@ -100,9 +99,77 @@ contract NFTMarketplaceTest is Test {
         (, address sellerAfter2,,) = nftMarketplace.listings(address(nft), tokenId);
 
         assertEq(sellerAfter2, address(0));
-        
+
+        vm.stopPrank();
+    }
+
+    function testCannotBuyUnlistedNFT() public {
+        vm.startPrank(user);
+        vm.expectRevert("Listing not found");
+        nftMarketplace.buyNFT(address(nft), tokenId);
+        vm.stopPrank();
+    }
+
+    function testCannotBuyNFTWithIncorrectPrice() public {
+        vm.startPrank(user);
+        uint256 price = 3;
+        (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
+        nftMarketplace.listNFT(address(nft), tokenId, price);
+        (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerBefore, address(0));
+        assertEq(sellerAfter, user);
+
         vm.stopPrank();
 
+        address user2_ = vm.addr(3);
+        vm.startPrank(user2_);
+        vm.deal(user2_, price);
+        vm.expectRevert("Amount sent must be equal to the listing price");
+        nftMarketplace.buyNFT{value: price-1}(address(nft), tokenId);
+        vm.stopPrank();
+    }
+
+    function testShouldBuyNFTCorrectly() public {
+        vm.startPrank(user);
+        uint256 price = 3;
+        (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
+        nftMarketplace.listNFT(address(nft), tokenId, price);
+        (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        assertEq(sellerBefore, address(0));
+        assertEq(sellerAfter, user);
+        nft.approve(address(nftMarketplace), tokenId);
+        vm.stopPrank();
+
+        address user2_ = vm.addr(3);
+        vm.startPrank(user2_);
+        vm.deal(user2_, price);
+
+        uint256 balanceBefore = address(user2_).balance;
+        uint256 balanceBefore2 = address(user).balance;
+        
+        address ownerBefore = nft.ownerOf(tokenId);
+        (, address sellerBefore2,,) = nftMarketplace.listings(address(nft), tokenId);
+        
+        nftMarketplace.buyNFT{value: price}(address(nft), tokenId);
+        (, address sellerAfter2,,) = nftMarketplace.listings(address(nft), tokenId);
+
+        uint256 balanceAfter = address(user2_).balance;
+        uint256 balanceAfter2 = address(user).balance;
+
+        assertEq(balanceBefore - price, balanceAfter);
+        assertEq(balanceBefore2 + price, balanceAfter2);
+        
+        address ownerAfter = nft.ownerOf(tokenId);
+        
+        assertEq(ownerBefore, user);
+        assertEq(ownerAfter, user2_);
+
+        assertEq(sellerBefore2, user);
+        assertEq(sellerAfter2, address(0));
+
+        vm.stopPrank();
     }
 }
 
