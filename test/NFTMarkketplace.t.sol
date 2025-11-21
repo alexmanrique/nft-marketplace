@@ -19,10 +19,11 @@ contract NFTMarketplaceTest is Test {
     address user = vm.addr(2);
     NFTMock nft;
     uint256 tokenId = 0;
+    uint256 feePercentage = 2;
 
     function setUp() public {
         vm.startPrank(deployer);
-        nftMarketplace = new NFTMarketplace();
+        nftMarketplace = new NFTMarketplace(feePercentage);
         nft = new NFTMock();
         vm.startPrank(user);
         nft.mint(user, tokenId);
@@ -133,12 +134,14 @@ contract NFTMarketplaceTest is Test {
     function testShouldBuyNFTCorrectly() public {
         vm.startPrank(user);
         uint256 price = 3;
+
         (, address sellerBefore,,) = nftMarketplace.listings(address(nft), tokenId);
         nftMarketplace.listNFT(address(nft), tokenId, price);
         (, address sellerAfter,,) = nftMarketplace.listings(address(nft), tokenId);
 
         assertEq(sellerBefore, address(0));
         assertEq(sellerAfter, user);
+
         nft.approve(address(nftMarketplace), tokenId);
         vm.stopPrank();
 
@@ -158,8 +161,13 @@ contract NFTMarketplaceTest is Test {
         uint256 balanceAfter = address(user2_).balance;
         uint256 balanceAfter2 = address(user).balance;
 
-        assertEq(balanceBefore - price, balanceAfter);
-        assertEq(balanceBefore2 + price, balanceAfter2);
+        uint256 fee = nftMarketplace.calculateFee(price);
+
+        assertEq(balanceBefore - price - fee, balanceAfter);
+        assertEq(balanceBefore2 + price - fee, balanceAfter2);
+
+        uint256 balanceAfter3 = address(nftMarketplace.owner()).balance;
+        assertEq(balanceAfter3, fee);
 
         address ownerAfter = nft.ownerOf(tokenId);
 
